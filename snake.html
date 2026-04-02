@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nokia Snake Game</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #0f0;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #0f0;
+        }
+        .game-container {
+            display: inline-block;
+            background: #111;
+            padding: 15px;
+            border: 8px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #0f0;
+        }
+        canvas {
+            background: #000;
+            image-rendering: pixelated;
+            border: 4px solid #0f0;
+        }
+        #score {
+            font-size: 22px;
+            margin: 10px 0;
+        }
+        .controls {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #0a0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐍 NOKIA SNAKE 🐍</h1>
+    <div class="game-container">
+        <div id="score">Score: 0</div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+    </div>
+    
+    <div class="controls">
+        Use Arrow Keys ← ↑ → ↓ to move<br>
+        Press <strong>SPACE</strong> to Start / Restart
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+
+        const grid = 20;
+        let count = 0;
+        let score = 0;
+
+        let snake = [
+            {x: 160, y: 160},
+            {x: 140, y: 160},
+            {x: 120, y: 160}
+        ];
+
+        let dx = grid;
+        let dy = 0;
+
+        let foodX = 300;
+        let foodY = 300;
+
+        let gameOver = false;
+        let gameStarted = false;
+
+        // Random food position
+        function randomFood() {
+            foodX = Math.floor(Math.random() * (canvas.width / grid)) * grid;
+            foodY = Math.floor(Math.random() * (canvas.height / grid)) * grid;
+        }
+
+        // Main game loop
+        function gameLoop() {
+            if (gameOver || !gameStarted) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            count++;
+            if (count < 8) {  // Controls speed (lower = faster)
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            count = 0;
+
+            // Move snake
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+            // Wall collision
+            if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
+                gameOver = true;
+            }
+
+            // Self collision
+            for (let segment of snake) {
+                if (head.x === segment.x && head.y === segment.y) {
+                    gameOver = true;
+                }
+            }
+
+            snake.unshift(head);
+
+            // Eat food?
+            if (head.x === foodX && head.y === foodY) {
+                score += 10;
+                scoreElement.textContent = `Score: ${score}`;
+                randomFood();
+            } else {
+                snake.pop();
+            }
+
+            // Clear canvas
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw snake (green like old Nokia)
+            ctx.fillStyle = "#0f0";
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillRect(snake[i].x, snake[i].y, grid, grid);
+                ctx.strokeStyle = "#000";
+                ctx.strokeRect(snake[i].x, snake[i].y, grid, grid);
+            }
+
+            // Draw food (red dot)
+            ctx.fillStyle = "#f00";
+            ctx.fillRect(foodX, foodY, grid, grid);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Keyboard controls
+        document.addEventListener("keydown", e => {
+            if (gameOver && e.key === " ") {
+                // Restart game
+                snake = [
+                    {x: 160, y: 160},
+                    {x: 140, y: 160},
+                    {x: 120, y: 160}
+                ];
+                dx = grid;
+                dy = 0;
+                score = 0;
+                scoreElement.textContent = "Score: 0";
+                randomFood();
+                gameOver = false;
+                gameStarted = true;
+                return;
+            }
+
+            if (!gameStarted && e.key === " ") {
+                gameStarted = true;
+            }
+
+            switch (e.key) {
+                case "ArrowLeft":
+                    if (dx !== grid) { dx = -grid; dy = 0; }
+                    break;
+                case "ArrowRight":
+                    if (dx !== -grid) { dx = grid; dy = 0; }
+                    break;
+                case "ArrowUp":
+                    if (dy !== grid) { dx = 0; dy = -grid; }
+                    break;
+                case "ArrowDown":
+                    if (dy !== -grid) { dx = 0; dy = grid; }
+                    break;
+            }
+        });
+
+        // Start the game
+        randomFood();
+        gameLoop();
+    </script>
+</body>
+</html>
